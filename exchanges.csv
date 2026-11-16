@@ -1,0 +1,41 @@
+# Built-in exchanges.
+#
+# Sources:
+#   code, name   ISO 10383 market identifier list (iso20022.org), as read on
+#                2026-11-15. Names are its market names in ordinary case.
+#   time_zone,   The exchange_calendars project (github.com/gerrymanoim/
+#   weekdays,    exchange_calendars): the tz, open_times, close_times,
+#   sessions     break_start_times, break_end_times and weekmask in force
+#                today. XNAS, ARCX, XASE and BATS are aliases of XNYS there.
+#   XCBO         Hours of US listed options from the LEAN market-hours
+#                database (Option-usa: 09:30-16:00 New York), written in
+#                Chicago time.
+#   BINANCE,     Not ISO codes. Always open in UTC, from the LEAN
+#   COINBASE     market-hours database (Crypto-binance, Crypto-coinbase).
+#
+# weekdays and sessions are lists separated by spaces. A session is
+# start-end in the exchange's time zone; an end of 00:00 is the end of
+# the day.
+code,name,time_zone,weekdays,sessions
+XNYS,New York Stock Exchange,America/New_York,Mon Tue Wed Thu Fri,09:30-16:00
+XNAS,Nasdaq,America/New_York,Mon Tue Wed Thu Fri,09:30-16:00
+ARCX,NYSE Arca,America/New_York,Mon Tue Wed Thu Fri,09:30-16:00
+XASE,NYSE American,America/New_York,Mon Tue Wed Thu Fri,09:30-16:00
+BATS,Cboe BZX U.S. Equities Exchange,America/New_York,Mon Tue Wed Thu Fri,09:30-16:00
+XCBO,Cboe Options Exchange,America/Chicago,Mon Tue Wed Thu Fri,08:30-15:00
+XCBF,Cboe Futures Exchange,America/Chicago,Mon Tue Wed Thu Fri,08:30-15:15
+XTSE,Toronto Stock Exchange,America/Toronto,Mon Tue Wed Thu Fri,09:30-16:00
+XLON,London Stock Exchange,Europe/London,Mon Tue Wed Thu Fri,08:00-16:30
+XPAR,Euronext Paris,Europe/Paris,Mon Tue Wed Thu Fri,09:00-17:30
+XAMS,Euronext Amsterdam,Europe/Amsterdam,Mon Tue Wed Thu Fri,09:00-17:30
+XETR,Xetra,Europe/Berlin,Mon Tue Wed Thu Fri,09:00-17:30
+XSWX,SIX Swiss Exchange,Europe/Zurich,Mon Tue Wed Thu Fri,09:00-17:30
+XTKS,Tokyo Stock Exchange,Asia/Tokyo,Mon Tue Wed Thu Fri,09:00-11:30 12:30-15:30
+XHKG,Hong Kong Exchanges and Clearing,Asia/Hong_Kong,Mon Tue Wed Thu Fri,09:30-12:00 13:00-16:00
+XSHG,Shanghai Stock Exchange,Asia/Shanghai,Mon Tue Wed Thu Fri,09:30-11:30 13:00-15:00
+XKRX,Korea Exchange,Asia/Seoul,Mon Tue Wed Thu Fri,09:00-15:30
+XBOM,BSE,Asia/Kolkata,Mon Tue Wed Thu Fri,09:15-15:30
+XSES,Singapore Exchange,Asia/Singapore,Mon Tue Wed Thu Fri,09:00-17:00
+XASX,ASX,Australia/Sydney,Mon Tue Wed Thu Fri,10:00-16:00
+BINANCE,Binance,UTC,Sun Mon Tue Wed Thu Fri Sat,00:00-00:00
+COINBASE,Coinbase,UTC,Sun Mon Tue Wed Thu Fri Sat,00:00-00:00
