@@ -2,7 +2,6 @@
 
 [![tag](https://img.shields.io/github/tag/torhx/exchange.svg)](https://github.com/torhx/exchange/tags)
 [![Go Reference](https://pkg.go.dev/badge/github.com/torhx/exchange.svg)](https://pkg.go.dev/github.com/torhx/exchange)
-[![Go Report Card](https://goreportcard.com/badge/github.com/torhx/exchange)](https://goreportcard.com/report/github.com/torhx/exchange)
 [![CI](https://github.com/torhx/exchange/workflows/Exchange%20CI/badge.svg)](https://github.com/torhx/exchange/actions)
 [![codecov](https://codecov.io/gh/torhx/exchange/graph/badge.svg)](https://codecov.io/gh/torhx/exchange)
 [![License](https://img.shields.io/github/license/torhx/exchange)](./LICENSE)
