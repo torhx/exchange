@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/talav/civil"
+	"github.com/talav/country"
 
 	"github.com/torhx/exchange"
 )
@@ -87,35 +88,37 @@ func TestNewExchange(t *testing.T) {
 		name     string
 		code     exchange.Code
 		exchName string
+		country  country.Country
 		timeZone string
 		weekdays []time.Weekday
 		sessions []exchange.Session
 		wantErr  string
 	}{
-		{name: "market identifier", code: code(t, "XMIL"), exchName: " Borsa Italiana ", timeZone: "Europe/Rome", weekdays: workweek(), sessions: regular},
-		{name: "long code without an identifier", code: code(t, "KRAKEN"), exchName: "Kraken", timeZone: "UTC", weekdays: workweek(), sessions: regular},
-		{name: "two sessions with a break", code: code(t, "XMIL"), exchName: "Borsa Italiana", timeZone: "Europe/Rome", weekdays: workweek(), sessions: []exchange.Session{session(t, "09:00", "12:00"), session(t, "13:00", "17:30")}},
-		{name: "sessions that touch", code: code(t, "XMIL"), exchName: "Borsa Italiana", timeZone: "Europe/Rome", weekdays: workweek(), sessions: []exchange.Session{session(t, "09:00", "12:00"), session(t, "12:00", "17:30")}},
-		{name: "one trading day a week", code: code(t, "XMIL"), exchName: "Borsa Italiana", timeZone: "Europe/Rome", weekdays: []time.Weekday{time.Sunday}, sessions: regular},
-		{name: "zero code", exchName: "X", timeZone: "UTC", weekdays: workweek(), sessions: regular, wantErr: "code is missing"},
-		{name: "empty name", code: code(t, "XMIL"), exchName: "  ", timeZone: "UTC", weekdays: workweek(), sessions: regular, wantErr: "name is missing"},
-		{name: "empty time zone", code: code(t, "XMIL"), exchName: "X", timeZone: "", weekdays: workweek(), sessions: regular, wantErr: "time zone is missing"},
-		{name: "unknown time zone", code: code(t, "XMIL"), exchName: "X", timeZone: "Mars/Olympus", weekdays: workweek(), sessions: regular, wantErr: `time zone "Mars/Olympus": unknown time zone Mars/Olympus`},
-		{name: "no weekdays", code: code(t, "XMIL"), exchName: "X", timeZone: "UTC", sessions: regular, wantErr: "no trading weekdays"},
-		{name: "weekday given twice", code: code(t, "XMIL"), exchName: "X", timeZone: "UTC", weekdays: []time.Weekday{time.Monday, time.Monday}, sessions: regular, wantErr: "weekday Monday is given twice"},
-		{name: "weekday past Saturday", code: code(t, "XMIL"), exchName: "X", timeZone: "UTC", weekdays: []time.Weekday{7}, sessions: regular, wantErr: "weekday 7 must be in 0..6"},
-		{name: "negative weekday", code: code(t, "XMIL"), exchName: "X", timeZone: "UTC", weekdays: []time.Weekday{-1}, sessions: regular, wantErr: "weekday -1 must be in 0..6"},
-		{name: "no sessions", code: code(t, "XMIL"), exchName: "X", timeZone: "UTC", weekdays: workweek(), wantErr: "no sessions"},
-		{name: "sessions that overlap", code: code(t, "XMIL"), exchName: "X", timeZone: "UTC", weekdays: workweek(), sessions: []exchange.Session{session(t, "09:00", "12:00"), session(t, "11:00", "17:30")}, wantErr: "session 11:00:00-17:30:00 must start after session 09:00:00-12:00:00 ends"},
-		{name: "sessions out of order", code: code(t, "XMIL"), exchName: "X", timeZone: "UTC", weekdays: workweek(), sessions: []exchange.Session{session(t, "13:00", "17:30"), session(t, "09:00", "12:00")}, wantErr: "session 09:00:00-12:00:00 must start after session 13:00:00-17:30:00 ends"},
-		{name: "session after one that ends the day", code: code(t, "XMIL"), exchName: "X", timeZone: "UTC", weekdays: workweek(), sessions: []exchange.Session{session(t, "09:00", "00:00"), session(t, "23:00", "23:30")}, wantErr: "session 23:00:00-23:30:00 must start after session 09:00:00-00:00:00 ends"},
+		{name: "market identifier", code: code(t, "XMIL"), exchName: " Borsa Italiana ", country: country.IT, timeZone: "Europe/Rome", weekdays: workweek(), sessions: regular},
+		{name: "long code without an identifier", code: code(t, "KRAKEN"), exchName: "Kraken", country: country.US, timeZone: "UTC", weekdays: workweek(), sessions: regular},
+		{name: "two sessions with a break", code: code(t, "XMIL"), exchName: "Borsa Italiana", country: country.IT, timeZone: "Europe/Rome", weekdays: workweek(), sessions: []exchange.Session{session(t, "09:00", "12:00"), session(t, "13:00", "17:30")}},
+		{name: "sessions that touch", code: code(t, "XMIL"), exchName: "Borsa Italiana", country: country.IT, timeZone: "Europe/Rome", weekdays: workweek(), sessions: []exchange.Session{session(t, "09:00", "12:00"), session(t, "12:00", "17:30")}},
+		{name: "one trading day a week", code: code(t, "XMIL"), exchName: "Borsa Italiana", country: country.IT, timeZone: "Europe/Rome", weekdays: []time.Weekday{time.Sunday}, sessions: regular},
+		{name: "zero code", exchName: "X", country: country.IT, timeZone: "UTC", weekdays: workweek(), sessions: regular, wantErr: "code is missing"},
+		{name: "empty name", code: code(t, "XMIL"), exchName: "  ", country: country.IT, timeZone: "UTC", weekdays: workweek(), sessions: regular, wantErr: "name is missing"},
+		{name: "zero country", code: code(t, "XMIL"), exchName: "X", timeZone: "UTC", weekdays: workweek(), sessions: regular, wantErr: "country is missing"},
+		{name: "empty time zone", code: code(t, "XMIL"), exchName: "X", country: country.IT, timeZone: "", weekdays: workweek(), sessions: regular, wantErr: "time zone is missing"},
+		{name: "unknown time zone", code: code(t, "XMIL"), exchName: "X", country: country.IT, timeZone: "Mars/Olympus", weekdays: workweek(), sessions: regular, wantErr: `time zone "Mars/Olympus": unknown time zone Mars/Olympus`},
+		{name: "no weekdays", code: code(t, "XMIL"), exchName: "X", country: country.IT, timeZone: "UTC", sessions: regular, wantErr: "no trading weekdays"},
+		{name: "weekday given twice", code: code(t, "XMIL"), exchName: "X", country: country.IT, timeZone: "UTC", weekdays: []time.Weekday{time.Monday, time.Monday}, sessions: regular, wantErr: "weekday Monday is given twice"},
+		{name: "weekday past Saturday", code: code(t, "XMIL"), exchName: "X", country: country.IT, timeZone: "UTC", weekdays: []time.Weekday{7}, sessions: regular, wantErr: "weekday 7 must be in 0..6"},
+		{name: "negative weekday", code: code(t, "XMIL"), exchName: "X", country: country.IT, timeZone: "UTC", weekdays: []time.Weekday{-1}, sessions: regular, wantErr: "weekday -1 must be in 0..6"},
+		{name: "no sessions", code: code(t, "XMIL"), exchName: "X", country: country.IT, timeZone: "UTC", weekdays: workweek(), wantErr: "no sessions"},
+		{name: "sessions that overlap", code: code(t, "XMIL"), exchName: "X", country: country.IT, timeZone: "UTC", weekdays: workweek(), sessions: []exchange.Session{session(t, "09:00", "12:00"), session(t, "11:00", "17:30")}, wantErr: "session 11:00:00-17:30:00 must start after session 09:00:00-12:00:00 ends"},
+		{name: "sessions out of order", code: code(t, "XMIL"), exchName: "X", country: country.IT, timeZone: "UTC", weekdays: workweek(), sessions: []exchange.Session{session(t, "13:00", "17:30"), session(t, "09:00", "12:00")}, wantErr: "session 09:00:00-12:00:00 must start after session 13:00:00-17:30:00 ends"},
+		{name: "session after one that ends the day", code: code(t, "XMIL"), exchName: "X", country: country.IT, timeZone: "UTC", weekdays: workweek(), sessions: []exchange.Session{session(t, "09:00", "00:00"), session(t, "23:00", "23:30")}, wantErr: "session 23:00:00-23:30:00 must start after session 09:00:00-00:00:00 ends"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := exchange.NewExchange(tt.code, tt.exchName, tt.timeZone, tt.weekdays, tt.sessions)
+			got, err := exchange.NewExchange(tt.code, tt.exchName, tt.country, tt.timeZone, tt.weekdays, tt.sessions)
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
 				assert.False(t, got.IsValid())
@@ -128,6 +131,7 @@ func TestNewExchange(t *testing.T) {
 			assert.Equal(t, tt.code, got.Code())
 			assert.Equal(t, tt.code.String(), got.String())
 			assert.Equal(t, strings.TrimSpace(tt.exchName), got.Name())
+			assert.Equal(t, tt.country, got.Country())
 			assert.Equal(t, tt.timeZone, got.TimeZone())
 			assert.Equal(t, tt.timeZone, got.Location().String())
 			assert.Equal(t, tt.sessions, got.Sessions())
@@ -140,7 +144,7 @@ func TestNewExchangeCopiesItsSessions(t *testing.T) {
 
 	sessions := []exchange.Session{session(t, "09:30", "16:00")}
 
-	e, err := exchange.NewExchange(code(t, "XMIL"), "Borsa Italiana", "Europe/Rome", workweek(), sessions)
+	e, err := exchange.NewExchange(code(t, "XMIL"), "Borsa Italiana", country.IT, "Europe/Rome", workweek(), sessions)
 	require.NoError(t, err)
 
 	sessions[0] = session(t, "10:00", "11:00")
@@ -157,6 +161,7 @@ func TestNewExchangeFromString(t *testing.T) {
 		code         string
 		wantCode     string
 		wantName     string
+		wantCountry  country.Country
 		wantTimeZone string
 		wantWeekdays []time.Weekday
 		wantSessions []exchange.Session
@@ -164,27 +169,27 @@ func TestNewExchangeFromString(t *testing.T) {
 		wantErr      string
 	}{
 		{
-			name: "New York", code: "XNYS", wantCode: "XNYS", wantName: "New York Stock Exchange", wantTimeZone: "America/New_York",
+			name: "New York", code: "XNYS", wantCode: "XNYS", wantName: "New York Stock Exchange", wantCountry: country.US, wantTimeZone: "America/New_York",
 			wantWeekdays: workweek(), wantSessions: []exchange.Session{session(t, "09:30", "16:00")}, wantDuration: 6*time.Hour + 30*time.Minute,
 		},
 		{
-			name: "lower case with spaces", code: " xnas\n", wantCode: "XNAS", wantName: "Nasdaq", wantTimeZone: "America/New_York",
+			name: "lower case with spaces", code: " xnas\n", wantCode: "XNAS", wantName: "Nasdaq", wantCountry: country.US, wantTimeZone: "America/New_York",
 			wantWeekdays: workweek(), wantSessions: []exchange.Session{session(t, "09:30", "16:00")}, wantDuration: 6*time.Hour + 30*time.Minute,
 		},
 		{
-			name: "options in Chicago", code: "XCBO", wantCode: "XCBO", wantName: "Cboe Options Exchange", wantTimeZone: "America/Chicago",
+			name: "options in Chicago", code: "XCBO", wantCode: "XCBO", wantName: "Cboe Options Exchange", wantCountry: country.US, wantTimeZone: "America/Chicago",
 			wantWeekdays: workweek(), wantSessions: []exchange.Session{session(t, "08:30", "15:00")}, wantDuration: 6*time.Hour + 30*time.Minute,
 		},
 		{
-			name: "London", code: "XLON", wantCode: "XLON", wantName: "London Stock Exchange", wantTimeZone: "Europe/London",
+			name: "London", code: "XLON", wantCode: "XLON", wantName: "London Stock Exchange", wantCountry: country.GB, wantTimeZone: "Europe/London",
 			wantWeekdays: workweek(), wantSessions: []exchange.Session{session(t, "08:00", "16:30")}, wantDuration: 8*time.Hour + 30*time.Minute,
 		},
 		{
-			name: "lunch break", code: "XTKS", wantCode: "XTKS", wantName: "Tokyo Stock Exchange", wantTimeZone: "Asia/Tokyo",
+			name: "lunch break", code: "XTKS", wantCode: "XTKS", wantName: "Tokyo Stock Exchange", wantCountry: country.JP, wantTimeZone: "Asia/Tokyo",
 			wantWeekdays: workweek(), wantSessions: []exchange.Session{session(t, "09:00", "11:30"), session(t, "12:30", "15:30")}, wantDuration: 5*time.Hour + 30*time.Minute,
 		},
 		{
-			name: "always open", code: "BINANCE", wantCode: "BINANCE", wantName: "Binance", wantTimeZone: "UTC",
+			name: "always open", code: "BINANCE", wantCode: "BINANCE", wantName: "Binance", wantCountry: country.US, wantTimeZone: "UTC",
 			wantWeekdays: []time.Weekday{time.Sunday, time.Monday, time.Tuesday, time.Wednesday, time.Thursday, time.Friday, time.Saturday},
 			wantSessions: []exchange.Session{session(t, "00:00", "00:00")}, wantDuration: 24 * time.Hour,
 		},
@@ -214,6 +219,7 @@ func TestNewExchangeFromString(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, got, byCode)
 			assert.Equal(t, tt.wantName, got.Name())
+			assert.Equal(t, tt.wantCountry, got.Country())
 			assert.Equal(t, tt.wantTimeZone, got.TimeZone())
 			assert.Equal(t, tt.wantWeekdays, got.Weekdays())
 			assert.Equal(t, tt.wantSessions, got.Sessions())
@@ -238,6 +244,7 @@ func TestExchanges(t *testing.T) {
 
 		assert.True(t, e.IsValid(), e.String())
 		assert.NotEmpty(t, e.Name(), e.String())
+		assert.True(t, e.Country().IsValid(), e.String())
 		assert.NotEmpty(t, e.Sessions(), e.String())
 
 		again, err := exchange.NewExchangeFromCode(e.Code())
@@ -254,7 +261,7 @@ func TestExchanges(t *testing.T) {
 func TestNewExchangesFromCSV(t *testing.T) {
 	t.Parallel()
 
-	const header = "code,name,time_zone,weekdays,sessions\n"
+	const header = "code,name,country,time_zone,weekdays,sessions\n"
 
 	tests := []struct {
 		name      string
@@ -262,28 +269,30 @@ func TestNewExchangesFromCSV(t *testing.T) {
 		wantCodes []string
 		wantErr   string
 	}{
-		{name: "one exchange", text: header + "XMIL,Borsa Italiana,Europe/Rome,Mon Tue Wed Thu Fri,09:00-17:30\n", wantCodes: []string{"XMIL"}},
+		{name: "one exchange", text: header + "XMIL,Borsa Italiana,IT,Europe/Rome,Mon Tue Wed Thu Fri,09:00-17:30\n", wantCodes: []string{"XMIL"}},
 		{
 			name:      "comments, mixed case and two sessions",
-			text:      "# my venues\n" + header + "xmil,Borsa Italiana,Europe/Rome,mon TUE Wed thu Fri,09:00-12:00 13:00-17:30\n# another\nKRAKEN,Kraken,UTC,Sun Mon Tue Wed Thu Fri Sat,00:00-00:00\n",
+			text:      "# my venues\n" + header + "xmil,Borsa Italiana,it,Europe/Rome,mon TUE Wed thu Fri,09:00-12:00 13:00-17:30\n# another\nKRAKEN,Kraken,US,UTC,Sun Mon Tue Wed Thu Fri Sat,00:00-00:00\n",
 			wantCodes: []string{"XMIL", "KRAKEN"},
 		},
 		{name: "header alone", text: header, wantCodes: []string{}},
 		{name: "empty text", text: "", wantErr: "read header: EOF"},
-		{name: "other header", text: "mic,name,tz,days,hours\nXMIL,Borsa Italiana,Europe/Rome,Mon,09:00-17:30\n", wantErr: "header must be code,name,time_zone,weekdays,sessions"},
+		{name: "other header", text: "mic,name,land,tz,days,hours\nXMIL,Borsa Italiana,IT,Europe/Rome,Mon,09:00-17:30\n", wantErr: "header must be code,name,country,time_zone,weekdays,sessions"},
 		{name: "header with too few fields", text: "code,name\n", wantErr: "read header: record on line 1: wrong number of fields"},
 		{name: "record with too few fields", text: header + "XMIL,Borsa Italiana,Europe/Rome\n", wantErr: "record on line 2: wrong number of fields"},
-		{name: "unknown weekday", text: header + "XMIL,Borsa Italiana,Europe/Rome,Mon Funday,09:00-17:30\n", wantErr: `line 2: weekday "Funday" must be one of Sun Mon Tue Wed Thu Fri Sat`},
-		{name: "weekday given twice", text: header + "XMIL,Borsa Italiana,Europe/Rome,Mon Mon,09:00-17:30\n", wantErr: "line 2: weekday Monday is given twice"},
-		{name: "no weekdays", text: header + "XMIL,Borsa Italiana,Europe/Rome,,09:00-17:30\n", wantErr: "line 2: no trading weekdays"},
-		{name: "session without a hyphen", text: header + "XMIL,Borsa Italiana,Europe/Rome,Mon,09:00\n", wantErr: `line 2: session "09:00" must be start-end, such as 09:30-16:00`},
-		{name: "session with a bad start", text: header + "XMIL,Borsa Italiana,Europe/Rome,Mon,9am-17:30\n", wantErr: `line 2: session "9am-17:30": invalid time "9am": must be HH:MM, HH:MM:SS or HH:MM:SS.fffffffff`},
-		{name: "session with a bad end", text: header + "XMIL,Borsa Italiana,Europe/Rome,Mon,09:00-25:00\n", wantErr: `line 2: session "09:00-25:00": invalid time "25:00": hour 25 must be in 0..23`},
-		{name: "session that ends before it starts", text: header + "XMIL,Borsa Italiana,Europe/Rome,Mon,17:30-09:00\n", wantErr: "line 2: session end 09:00:00 must be after its start 17:30:00"},
-		{name: "no sessions", text: header + "XMIL,Borsa Italiana,Europe/Rome,Mon,\n", wantErr: "line 2: no sessions"},
-		{name: "unknown time zone", text: header + "XMIL,Borsa Italiana,Europe/Atlantis,Mon,09:00-17:30\n", wantErr: `line 2: time zone "Europe/Atlantis": unknown time zone Europe/Atlantis`},
-		{name: "bad code on the third line", text: header + "XMIL,Borsa Italiana,Europe/Rome,Mon,09:00-17:30\nX,Short,UTC,Mon,09:00-17:30\n", wantErr: `line 3: invalid exchange code "X": must be 2 to 12 letters or digits`},
-		{name: "code twice", text: header + "XMIL,Borsa Italiana,Europe/Rome,Mon,09:00-17:30\nxmil,Again,UTC,Mon,09:00-17:30\n", wantErr: "line 3: exchange XMIL appears twice"},
+		{name: "unknown country", text: header + "XMIL,Borsa Italiana,XX,Europe/Rome,Mon,09:00-17:30\n", wantErr: `line 2: invalid country "XX": not an ISO 3166-1 code`},
+		{name: "no country", text: header + "XMIL,Borsa Italiana,,Europe/Rome,Mon,09:00-17:30\n", wantErr: `line 2: invalid country "": not an ISO 3166-1 code`},
+		{name: "unknown weekday", text: header + "XMIL,Borsa Italiana,IT,Europe/Rome,Mon Funday,09:00-17:30\n", wantErr: `line 2: weekday "Funday" must be one of Sun Mon Tue Wed Thu Fri Sat`},
+		{name: "weekday given twice", text: header + "XMIL,Borsa Italiana,IT,Europe/Rome,Mon Mon,09:00-17:30\n", wantErr: "line 2: weekday Monday is given twice"},
+		{name: "no weekdays", text: header + "XMIL,Borsa Italiana,IT,Europe/Rome,,09:00-17:30\n", wantErr: "line 2: no trading weekdays"},
+		{name: "session without a hyphen", text: header + "XMIL,Borsa Italiana,IT,Europe/Rome,Mon,09:00\n", wantErr: `line 2: session "09:00" must be start-end, such as 09:30-16:00`},
+		{name: "session with a bad start", text: header + "XMIL,Borsa Italiana,IT,Europe/Rome,Mon,9am-17:30\n", wantErr: `line 2: session "9am-17:30": invalid time "9am": must be HH:MM, HH:MM:SS or HH:MM:SS.fffffffff`},
+		{name: "session with a bad end", text: header + "XMIL,Borsa Italiana,IT,Europe/Rome,Mon,09:00-25:00\n", wantErr: `line 2: session "09:00-25:00": invalid time "25:00": hour 25 must be in 0..23`},
+		{name: "session that ends before it starts", text: header + "XMIL,Borsa Italiana,IT,Europe/Rome,Mon,17:30-09:00\n", wantErr: "line 2: session end 09:00:00 must be after its start 17:30:00"},
+		{name: "no sessions", text: header + "XMIL,Borsa Italiana,IT,Europe/Rome,Mon,\n", wantErr: "line 2: no sessions"},
+		{name: "unknown time zone", text: header + "XMIL,Borsa Italiana,IT,Europe/Atlantis,Mon,09:00-17:30\n", wantErr: `line 2: time zone "Europe/Atlantis": unknown time zone Europe/Atlantis`},
+		{name: "bad code on the third line", text: header + "XMIL,Borsa Italiana,IT,Europe/Rome,Mon,09:00-17:30\nX,Short,US,UTC,Mon,09:00-17:30\n", wantErr: `line 3: invalid exchange code "X": must be 2 to 12 letters or digits`},
+		{name: "code twice", text: header + "XMIL,Borsa Italiana,IT,Europe/Rome,Mon,09:00-17:30\nxmil,Again,IT,UTC,Mon,09:00-17:30\n", wantErr: "line 3: exchange XMIL appears twice"},
 	}
 
 	for _, tt := range tests {
@@ -461,7 +470,7 @@ func TestExchangeText(t *testing.T) {
 		_ encoding.TextUnmarshaler = &exchange.Exchange{}
 	)
 
-	custom, err := exchange.NewExchange(code(t, "KRAKEN"), "Kraken", "UTC", workweek(), []exchange.Session{session(t, "00:00", "00:00")})
+	custom, err := exchange.NewExchange(code(t, "KRAKEN"), "Kraken", country.US, "UTC", workweek(), []exchange.Session{session(t, "00:00", "00:00")})
 	require.NoError(t, err)
 
 	tests := []struct {

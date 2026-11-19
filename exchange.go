@@ -1,7 +1,7 @@
 // Package exchange provides Exchange: a venue where instruments trade, with
 // the facts about it that do not depend on the date. Those are its code, its
-// name, its time zone, the days of the week it trades and its regular
-// sessions.
+// name, its country, its time zone, the days of the week it trades and its
+// regular sessions.
 //
 // A list of well-known exchanges is built in and comes from
 // NewExchangeFromCode or NewExchangeFromString. Any other exchange comes from
@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/talav/civil"
+	"github.com/talav/country"
 )
 
 const (
@@ -35,7 +36,21 @@ const (
 	hoursPerDay = 24
 
 	// csvHeader is the first record of a file of exchanges.
-	csvHeader = "code,name,time_zone,weekdays,sessions"
+	csvHeader = "code,name,country,time_zone,weekdays,sessions"
+)
+
+// The positions of the fields of a record in a file of exchanges, in the
+// order of csvHeader.
+const (
+	codeColumn = iota
+	nameColumn
+	countryColumn
+	timeZoneColumn
+	weekdaysColumn
+	sessionsColumn
+
+	// columnCount is the number of fields in a record.
+	columnCount
 )
 
 // builtInCSV is the built-in list of exchanges, in the format that
@@ -49,9 +64,9 @@ var builtInCSV []byte
 // any ordinary day.
 //
 // An Exchange comes only from a constructor, so it always has a code, a
-// name, a time zone that exists, at least one trading day in the week and at
-// least one session. Two exchanges are the same venue when their codes are
-// equal; an Exchange is not comparable with ==, but its Code is.
+// name, a country, a time zone that exists, at least one trading day in the
+// week and at least one session. Two exchanges are the same venue when their
+// codes are equal; an Exchange is not comparable with ==, but its Code is.
 //
 // The zero value is not an exchange. It stands for a missing one, IsValid
 // reports false for it, and other methods are meaningless on it.
@@ -61,6 +76,10 @@ type Exchange struct {
 
 	// name is the name of the exchange for people to read.
 	name string
+
+	// country is the country the exchange is in. It is never the zero
+	// Country.
+	country country.Country
 
 	// location is the time zone the exchange keeps its hours in. Its trading
 	// day is a calendar day there.
@@ -75,14 +94,15 @@ type Exchange struct {
 	sessions []Session
 }
 
-// NewExchange returns the exchange with the given code and name, which
-// keeps its hours in the IANA time zone timeZone, trades on weekdays and
-// holds the given regular sessions on each of them.
+// NewExchange returns the exchange with the given code and name in the given
+// country, which keeps its hours in the IANA time zone timeZone, trades on
+// weekdays and holds the given regular sessions on each of them.
 //
 // It returns an error if the code is the zero Code, if the name is empty, if
-// the time zone is unknown, if no weekday is given or one is given twice, or
-// if there are no sessions or they are not in order without overlap.
-func NewExchange(code Code, name, timeZone string, weekdays []time.Weekday, sessions []Session) (Exchange, error) {
+// the country is the zero Country, if the time zone is unknown, if no weekday
+// is given or one is given twice, or if there are no sessions or they are not
+// in order without overlap.
+func NewExchange(code Code, name string, country country.Country, timeZone string, weekdays []time.Weekday, sessions []Session) (Exchange, error) {
 	if timeZone == "" {
 		return Exchange{}, errors.New("time zone is missing")
 	}
@@ -100,6 +120,7 @@ func NewExchange(code Code, name, timeZone string, weekdays []time.Weekday, sess
 	e := Exchange{
 		code:     code,
 		name:     strings.TrimSpace(name),
+		country:  country,
 		location: location,
 		weekdays: week,
 		sessions: slices.Clone(sessions),
@@ -146,21 +167,22 @@ func NewExchangeFromString(s string) (Exchange, error) {
 // NewExchangesFromCSV reads exchanges from CSV text, one for each record.
 // The first record must be the header
 //
-//	code,name,time_zone,weekdays,sessions
+//	code,name,country,time_zone,weekdays,sessions
 //
 // and each later record gives the arguments of NewExchange: the code as
-// NewCode reads one, weekdays as three-letter English day names and sessions
-// as start-end pairs of times, each list separated by spaces. A line that
-// starts with # is a comment.
+// NewCode reads one, the country as country.NewCountryFromString reads one,
+// weekdays as three-letter English day names and sessions as start-end pairs
+// of times, each list separated by spaces. A line that starts with # is a
+// comment.
 //
-//	XTKS,Tokyo Stock Exchange,Asia/Tokyo,Mon Tue Wed Thu Fri,09:00-11:30 12:30-15:30
+//	XTKS,Tokyo Stock Exchange,JP,Asia/Tokyo,Mon Tue Wed Thu Fri,09:00-11:30 12:30-15:30
 //
 // It returns an error, naming the line, if the text is not such a file, if a
 // record does not make an exchange, or if a code appears twice.
 func NewExchangesFromCSV(r io.Reader) ([]Exchange, error) {
 	reader := csv.NewReader(r)
 	reader.Comment = '#'
-	reader.FieldsPerRecord = strings.Count(csvHeader, ",") + 1
+	reader.FieldsPerRecord = columnCount
 
 	header, err := reader.Read()
 	if err != nil {
@@ -217,6 +239,9 @@ func (e Exchange) Code() Code { return e.code }
 
 // Name returns the name of the exchange for people to read.
 func (e Exchange) Name() string { return e.name }
+
+// Country returns the country the exchange is in, such as US for XNYS.
+func (e Exchange) Country() country.Country { return e.country }
 
 // TimeZone returns the IANA name of the time zone the exchange keeps its
 // hours in, such as America/New_York.
@@ -397,6 +422,10 @@ func (e Exchange) validate() error {
 		return errors.New("name is missing")
 	}
 
+	if !e.country.IsValid() {
+		return errors.New("country is missing")
+	}
+
 	if len(e.Weekdays()) == 0 {
 		return errors.New("no trading weekdays")
 	}
@@ -417,22 +446,27 @@ func (e Exchange) validate() error {
 
 // newExchangeFromRecord returns the exchange that one CSV record describes.
 func newExchangeFromRecord(record []string) (Exchange, error) {
-	weekdays, err := parseWeekdays(record[3])
+	code, err := NewCode(record[codeColumn])
 	if err != nil {
 		return Exchange{}, err
 	}
 
-	sessions, err := parseSessions(record[4])
+	exchangeCountry, err := country.NewCountryFromString(record[countryColumn])
 	if err != nil {
 		return Exchange{}, err
 	}
 
-	code, err := NewCode(record[0])
+	weekdays, err := parseWeekdays(record[weekdaysColumn])
 	if err != nil {
 		return Exchange{}, err
 	}
 
-	return NewExchange(code, record[1], record[2], weekdays, sessions)
+	sessions, err := parseSessions(record[sessionsColumn])
+	if err != nil {
+		return Exchange{}, err
+	}
+
+	return NewExchange(code, record[nameColumn], exchangeCountry, record[timeZoneColumn], weekdays, sessions)
 }
 
 // weekOf returns the trading week that lists exactly the given days.

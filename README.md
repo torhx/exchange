@@ -6,7 +6,7 @@
 [![codecov](https://codecov.io/gh/torhx/exchange/graph/badge.svg)](https://codecov.io/gh/torhx/exchange)
 [![License](https://img.shields.io/github/license/torhx/exchange)](./LICENSE)
 
-Trading venues for Go: an exchange with its code, name, time zone, trading weekdays and regular sessions, that cannot hold an invalid value.
+Trading venues for Go: an exchange with its code, name, country, time zone, trading weekdays and regular sessions, that cannot hold an invalid value.
 
 ## Features
 
@@ -17,7 +17,7 @@ Trading venues for Go: an exchange with its code, name, time zone, trading weekd
 - **Your own exchanges**: from a constructor, or from a CSV file in the format of the built-in list
 - **Valid by construction**: constructors return an error instead of a venue with no hours or an unknown time zone
 - **Text, JSON and SQL**: written as its code
-- **One dependency**: [`github.com/talav/civil`](https://github.com/talav/civil) for dates and times of day
+- **Two dependencies**: [`github.com/talav/civil`](https://github.com/talav/civil) for dates and times of day, and [`github.com/talav/country`](https://github.com/talav/country) for countries
 
 An exchange holds only what is true on any ordinary day. Holidays, early closes and events are dated facts and belong to a calendar, which is a separate component.
 
@@ -67,6 +67,7 @@ func main() {
 ```go
 e.Code()     // XNYS, an exchange.Code
 e.Name()     // "New York Stock Exchange"
+e.Country()  // US, a country.Country
 e.TimeZone() // "America/New_York"
 e.Location() // the *time.Location
 e.IsValid()  // true; false only for exchange.Exchange{}
@@ -140,7 +141,7 @@ day, _ := exchange.NewSession(open, closing)
 code, _ := exchange.NewCode("XMIL")
 
 milan, err := exchange.NewExchange(
-    code, "Borsa Italiana", "Europe/Rome",
+    code, "Borsa Italiana", country.IT, "Europe/Rome",
     []time.Weekday{time.Monday, time.Tuesday, time.Wednesday, time.Thursday, time.Friday},
     []exchange.Session{day},
 )
@@ -150,9 +151,9 @@ Or from a CSV file in the format of the built-in list:
 
 ```csv
 # my venues
-code,name,time_zone,weekdays,sessions
-XMIL,Borsa Italiana,Europe/Rome,Mon Tue Wed Thu Fri,09:00-17:30
-KRAKEN,Kraken,UTC,Sun Mon Tue Wed Thu Fri Sat,00:00-00:00
+code,name,country,time_zone,weekdays,sessions
+XMIL,Borsa Italiana,IT,Europe/Rome,Mon Tue Wed Thu Fri,09:00-17:30
+KRAKEN,Kraken,US,UTC,Sun Mon Tue Wed Thu Fri Sat,00:00-00:00
 ```
 
 ```go
@@ -181,34 +182,34 @@ A code alone does not give the time zone or the hours of an exchange outside the
 
 `exchange.Exchanges()` returns them all.
 
-| Code | Name | Time zone | Sessions |
-|------|------|-----------|----------|
-| `XNYS` | New York Stock Exchange | America/New_York | 09:30-16:00 |
-| `XNAS` | Nasdaq | America/New_York | 09:30-16:00 |
-| `ARCX` | NYSE Arca | America/New_York | 09:30-16:00 |
-| `XASE` | NYSE American | America/New_York | 09:30-16:00 |
-| `BATS` | Cboe BZX U.S. Equities Exchange | America/New_York | 09:30-16:00 |
-| `XCBO` | Cboe Options Exchange | America/Chicago | 08:30-15:00 |
-| `XCBF` | Cboe Futures Exchange | America/Chicago | 08:30-15:15 |
-| `XTSE` | Toronto Stock Exchange | America/Toronto | 09:30-16:00 |
-| `XLON` | London Stock Exchange | Europe/London | 08:00-16:30 |
-| `XPAR` | Euronext Paris | Europe/Paris | 09:00-17:30 |
-| `XAMS` | Euronext Amsterdam | Europe/Amsterdam | 09:00-17:30 |
-| `XETR` | Xetra | Europe/Berlin | 09:00-17:30 |
-| `XSWX` | SIX Swiss Exchange | Europe/Zurich | 09:00-17:30 |
-| `XTKS` | Tokyo Stock Exchange | Asia/Tokyo | 09:00-11:30, 12:30-15:30 |
-| `XHKG` | Hong Kong Exchanges and Clearing | Asia/Hong_Kong | 09:30-12:00, 13:00-16:00 |
-| `XSHG` | Shanghai Stock Exchange | Asia/Shanghai | 09:30-11:30, 13:00-15:00 |
-| `XKRX` | Korea Exchange | Asia/Seoul | 09:00-15:30 |
-| `XBOM` | BSE | Asia/Kolkata | 09:15-15:30 |
-| `XSES` | Singapore Exchange | Asia/Singapore | 09:00-17:00 |
-| `XASX` | ASX | Australia/Sydney | 10:00-16:00 |
-| `BINANCE` | Binance | UTC | always open |
-| `COINBASE` | Coinbase | UTC | always open |
+| Code | Name | Country | Time zone | Sessions |
+|------|------|---------|-----------|----------|
+| `XNYS` | New York Stock Exchange | US | America/New_York | 09:30-16:00 |
+| `XNAS` | Nasdaq | US | America/New_York | 09:30-16:00 |
+| `ARCX` | NYSE Arca | US | America/New_York | 09:30-16:00 |
+| `XASE` | NYSE American | US | America/New_York | 09:30-16:00 |
+| `BATS` | Cboe BZX U.S. Equities Exchange | US | America/New_York | 09:30-16:00 |
+| `XCBO` | Cboe Options Exchange | US | America/Chicago | 08:30-15:00 |
+| `XCBF` | Cboe Futures Exchange | US | America/Chicago | 08:30-15:15 |
+| `XTSE` | Toronto Stock Exchange | CA | America/Toronto | 09:30-16:00 |
+| `XLON` | London Stock Exchange | GB | Europe/London | 08:00-16:30 |
+| `XPAR` | Euronext Paris | FR | Europe/Paris | 09:00-17:30 |
+| `XAMS` | Euronext Amsterdam | NL | Europe/Amsterdam | 09:00-17:30 |
+| `XETR` | Xetra | DE | Europe/Berlin | 09:00-17:30 |
+| `XSWX` | SIX Swiss Exchange | CH | Europe/Zurich | 09:00-17:30 |
+| `XTKS` | Tokyo Stock Exchange | JP | Asia/Tokyo | 09:00-11:30, 12:30-15:30 |
+| `XHKG` | Hong Kong Exchanges and Clearing | HK | Asia/Hong_Kong | 09:30-12:00, 13:00-16:00 |
+| `XSHG` | Shanghai Stock Exchange | CN | Asia/Shanghai | 09:30-11:30, 13:00-15:00 |
+| `XKRX` | Korea Exchange | KR | Asia/Seoul | 09:00-15:30 |
+| `XBOM` | BSE | IN | Asia/Kolkata | 09:15-15:30 |
+| `XSES` | Singapore Exchange | SG | Asia/Singapore | 09:00-17:00 |
+| `XASX` | ASX | AU | Australia/Sydney | 10:00-16:00 |
+| `BINANCE` | Binance | US | UTC | always open |
+| `COINBASE` | Coinbase | US | UTC | always open |
 
 All but the last two trade Monday to Friday.
 
-The list is [`exchanges.csv`](./exchanges.csv), and its header names the source of every value: codes and names from the ISO 10383 market identifier list, time zones and hours from the [exchange_calendars](https://github.com/gerrymanoim/exchange_calendars) project, and the options and crypto hours from the [LEAN](https://github.com/QuantConnect/Lean) market-hours database.
+The list is [`exchanges.csv`](./exchanges.csv), and its header names the source of every value: codes, names and countries from the ISO 10383 market identifier list, time zones and hours from the [exchange_calendars](https://github.com/gerrymanoim/exchange_calendars) project, and the options and crypto hours from the [LEAN](https://github.com/QuantConnect/Lean) market-hours database.
 
 ## What It Does Not Hold
 
