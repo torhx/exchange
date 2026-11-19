@@ -12,6 +12,7 @@ Trading venues for Go: an exchange with its code, name, country, time zone, trad
 
 - **The exchange owns its time zone**: ask it for the trading date of an instant, with no location passed around
 - **22 exchanges built in**: the main US, European and Asia-Pacific venues, and two crypto exchanges
+- **Named codes**: `exchange.XNYS`, `exchange.XLON`, ... with no error to handle
 - **Regular sessions, breaks included**: Tokyo's morning and afternoon sessions are two sessions, not one
 - **Always-open venues**: a crypto exchange trades the whole day, every day
 - **Your own exchanges**: from a constructor, or from a CSV file in the format of the built-in list
@@ -43,7 +44,7 @@ import (
 )
 
 func main() {
-    nyse, err := exchange.NewExchangeFromString("XNYS")
+    nyse, err := exchange.NewExchangeFromCode(exchange.XNYS)
     if err != nil {
         log.Fatal(err)
     }
@@ -83,6 +84,12 @@ code == nyse.Code()                   // true
 nyse, err := exchange.NewExchangeFromCode(code) // the same as NewExchangeFromString("XNYS")
 ```
 
+Every built-in exchange has a named code, so a code known when the program is written needs no error handling:
+
+```go
+exchange.XNYS == nyse.Code() // true
+```
+
 An `Exchange` cannot be compared with `==`, because it holds a list of sessions. Its `Code` can, and works as a map key. Two exchanges are the same venue when their codes are equal.
 
 #### Why a Code and not a MIC
@@ -109,7 +116,7 @@ e.IsAlwaysOpen()        // false
 A session is a stretch of one day, in the exchange's time zone. Its start is part of it and its end is not. An end of midnight means the end of the day, so `00:00-00:00` is the whole day.
 
 ```go
-tokyo, _ := exchange.NewExchangeFromString("XTKS")
+tokyo, _ := exchange.NewExchangeFromCode(exchange.XTKS)
 tokyo.Sessions()        // [09:00:00-11:30:00 12:30:00-15:30:00]
 tokyo.TradingDuration() // 5h30m
 ```

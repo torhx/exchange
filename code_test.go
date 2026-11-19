@@ -178,3 +178,24 @@ func TestCodeScan(t *testing.T) {
 		})
 	}
 }
+
+func TestCodeNamedValues(t *testing.T) {
+	t.Parallel()
+
+	exchanges, err := exchange.Exchanges()
+	require.NoError(t, err)
+
+	builtIn := make([]exchange.Code, len(exchanges))
+	for i, e := range exchanges {
+		builtIn[i] = e.Code()
+	}
+
+	assert.Equal(t, builtIn, namedCodes, "every built-in exchange must have a named code, in the order of the list")
+}
+
+// namedCodes lists every named code in the order of the built-in list.
+var namedCodes = []exchange.Code{
+	exchange.XNYS, exchange.XNAS, exchange.ARCX, exchange.XASE, exchange.BATS, exchange.XCBO, exchange.XCBF, exchange.XTSE,
+	exchange.XLON, exchange.XPAR, exchange.XAMS, exchange.XETR, exchange.XSWX, exchange.XTKS, exchange.XHKG, exchange.XSHG,
+	exchange.XKRX, exchange.XBOM, exchange.XSES, exchange.XASX, exchange.BINANCE, exchange.COINBASE,
+}

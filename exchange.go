@@ -9,6 +9,7 @@
 //
 // A Code identifies an exchange. It is a type of its own, so that a time
 // zone, a ticker or any other text cannot be passed where a code is meant.
+// Each built-in exchange has a named Code, such as XNYS.
 //
 // An Exchange knows nothing of holidays, early closes or any other dated
 // fact; a calendar adds those. Its regular hours say when it trades on an

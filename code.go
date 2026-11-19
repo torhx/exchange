@@ -32,9 +32,9 @@ const (
 // a valid Code, and the built-in exchanges use their MIC wherever they have
 // one.
 //
-// A Code comes only from a constructor, so it is always well formed. Codes
-// are comparable with == and usable as map keys, which makes a Code the way
-// to tell whether two exchanges are the same venue.
+// A Code is a named value, such as XNYS, or comes from a constructor, so it is
+// always well formed. Codes are comparable with == and usable as map keys,
+// which makes a Code the way to tell whether two exchanges are the same venue.
 //
 // The zero value is not a code. It stands for a missing one, IsValid reports
 // false for it, and other methods are meaningless on it.
@@ -42,6 +42,32 @@ type Code struct {
 	// value is the code in upper case.
 	value string
 }
+
+// The codes of the built-in exchanges, in the order of the built-in list.
+var (
+	XNYS     = Code{value: "XNYS"}     // New York Stock Exchange
+	XNAS     = Code{value: "XNAS"}     // Nasdaq
+	ARCX     = Code{value: "ARCX"}     // NYSE Arca
+	XASE     = Code{value: "XASE"}     // NYSE American
+	BATS     = Code{value: "BATS"}     // Cboe BZX U.S. Equities Exchange
+	XCBO     = Code{value: "XCBO"}     // Cboe Options Exchange
+	XCBF     = Code{value: "XCBF"}     // Cboe Futures Exchange
+	XTSE     = Code{value: "XTSE"}     // Toronto Stock Exchange
+	XLON     = Code{value: "XLON"}     // London Stock Exchange
+	XPAR     = Code{value: "XPAR"}     // Euronext Paris
+	XAMS     = Code{value: "XAMS"}     // Euronext Amsterdam
+	XETR     = Code{value: "XETR"}     // Xetra
+	XSWX     = Code{value: "XSWX"}     // SIX Swiss Exchange
+	XTKS     = Code{value: "XTKS"}     // Tokyo Stock Exchange
+	XHKG     = Code{value: "XHKG"}     // Hong Kong Exchanges and Clearing
+	XSHG     = Code{value: "XSHG"}     // Shanghai Stock Exchange
+	XKRX     = Code{value: "XKRX"}     // Korea Exchange
+	XBOM     = Code{value: "XBOM"}     // BSE
+	XSES     = Code{value: "XSES"}     // Singapore Exchange
+	XASX     = Code{value: "XASX"}     // ASX
+	BINANCE  = Code{value: "BINANCE"}  // Binance
+	COINBASE = Code{value: "COINBASE"} // Coinbase
+)
 
 // NewCode returns the code written in s. The code may be in any letter case,
 // and white space around it is ignored: "xnys" and " XNYS " both give XNYS.
