@@ -136,6 +136,12 @@ e.IsRegularHours(instant) // on a trading weekday, inside a session
 
 These use the regular hours only. `IsRegularHours` is true at noon on a holiday that falls on a weekday, and `RegularClose` gives 16:00 on a day that closes at 13:00. A calendar compares `RegularClose` with the real close to find an early one.
 
+To filter instants by a reporting period, use `period.Contains(e.DateOf(instant))` with a `civil.DateRange`. The start date is included and the end date is excluded, both on the exchange's calendar. For example, 02:00 UTC on April 1 still belongs to March in New York.
+
+To store a date together with the venue's named time zone, call `civil.NewLocationDate(e.DateOf(instant), e.TimeZone())`. The resulting `civil.LocationDate` can resolve a session start with `day.At(session.Start())`.
+
+Date calculations can cross year 0 or 9999. Civil's text and JSON encoders require the resulting year to be in 0 through 9999.
+
 ### Your own exchanges
 
 From a constructor:

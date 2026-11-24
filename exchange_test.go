@@ -3,6 +3,9 @@ package exchange_test
 import (
 	"encoding"
 	"encoding/json"
+	"fmt"
+	"log"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -399,6 +402,61 @@ func TestExchangeDateOf(t *testing.T) {
 	}
 }
 
+func TestExchangeDateOfOutsideTextRange(t *testing.T) {
+	t.Parallel()
+
+	tokyo := builtIn(t, "XTKS")
+
+	for _, year := range []int{-1, 10000} {
+		t.Run(strconv.Itoa(year), func(t *testing.T) {
+			t.Parallel()
+
+			// It is already New Year's Day in Tokyo.
+			instant := time.Date(year-1, time.December, 31, 18, 0, 0, 0, time.UTC)
+			wantDate, err := civil.NewDate(year, time.January, 1)
+			require.NoError(t, err)
+
+			date := tokyo.DateOf(instant)
+			local := tokyo.DateTimeOf(instant)
+			assert.Equal(t, wantDate, date)
+			assert.Equal(t, wantDate, local.Date())
+			assert.True(t, instant.Equal(tokyo.InstantOf(local)))
+
+			_, err = date.MarshalText()
+			require.Error(t, err)
+			_, err = local.MarshalText()
+			require.Error(t, err)
+		})
+	}
+}
+
+func ExampleExchange_DateOf() {
+	nyse, err := exchange.NewExchangeFromCode(exchange.XNYS)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	march, err := civil.NewDateRangeFromString("[2026-03-01,2026-04-01)")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// April has begun in UTC while it is still March in New York.
+	instant := time.Date(2026, time.April, 1, 2, 0, 0, 0, time.UTC)
+	day, err := civil.NewLocationDate(nyse.DateOf(instant), nyse.TimeZone())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(day)
+	fmt.Println(march.Contains(day.Date()))
+	fmt.Println(day.At(nyse.Open()).UTC().Format(time.RFC3339))
+	// Output:
+	// 2026-03-31[America/New_York]
+	// true
+	// 2026-03-31T13:30:00Z
+}
+
 func TestExchangeIsRegularHours(t *testing.T) {
 	t.Parallel()
 
@@ -433,6 +491,9 @@ func TestExchangeIsRegularHours(t *testing.T) {
 func TestExchangeRegularOpenAndClose(t *testing.T) {
 	t.Parallel()
 
+	allDay, err := exchange.NewExchange(code(t, "TEST"), "Sunday market", country.US, "America/New_York", []time.Weekday{time.Sunday}, []exchange.Session{{}})
+	require.NoError(t, err)
+
 	tests := []struct {
 		name      string
 		exchange  exchange.Exchange
@@ -445,6 +506,9 @@ func TestExchangeRegularOpenAndClose(t *testing.T) {
 		{name: "Chicago options close with New York", exchange: builtIn(t, "XCBO"), date: "2026-07-01", wantOpen: utc(t, "2026-07-01T13:30:00"), wantClose: utc(t, "2026-07-01T20:00:00")},
 		{name: "Tokyo closes after its second session", exchange: builtIn(t, "XTKS"), date: "2026-07-01", wantOpen: utc(t, "2026-07-01T00:00:00"), wantClose: utc(t, "2026-07-01T06:30:00")},
 		{name: "always-open exchange closes at the next midnight", exchange: builtIn(t, "BINANCE"), date: "2026-12-31", wantOpen: utc(t, "2026-12-31T00:00:00"), wantClose: utc(t, "2027-01-01T00:00:00")},
+		{name: "midnight close into year 10000", exchange: builtIn(t, "BINANCE"), date: "9999-12-31", wantOpen: utc(t, "9999-12-31T00:00:00"), wantClose: time.Date(10000, time.January, 1, 0, 0, 0, 0, time.UTC)},
+		{name: "midnight close after a 23-hour day", exchange: allDay, date: "2026-03-08", wantOpen: utc(t, "2026-03-08T05:00:00"), wantClose: utc(t, "2026-03-09T04:00:00")},
+		{name: "midnight close after a 25-hour day", exchange: allDay, date: "2026-11-01", wantOpen: utc(t, "2026-11-01T04:00:00"), wantClose: utc(t, "2026-11-02T05:00:00")},
 		{name: "a Saturday still has regular times", exchange: builtIn(t, "XLON"), date: "2026-01-03", wantOpen: utc(t, "2026-01-03T08:00:00"), wantClose: utc(t, "2026-01-03T16:30:00")},
 	}
 
