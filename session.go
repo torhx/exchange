@@ -49,15 +49,15 @@ func (s Session) End() civil.Time { return s.end }
 // Duration returns how long the session lasts on a day without a clock
 // change: 6h30m for 09:30 to 16:00.
 func (s Session) Duration() time.Duration {
-	return s.endOffset() - sinceMidnight(s.start)
+	return s.endOffset() - s.start.SinceMidnight()
 }
 
 // Contains reports whether trading is on at the time of day t. The start is
 // inside the session and the end is outside it.
 func (s Session) Contains(t civil.Time) bool {
-	offset := sinceMidnight(t)
+	offset := t.SinceMidnight()
 
-	return offset >= sinceMidnight(s.start) && offset < s.endOffset()
+	return offset >= s.start.SinceMidnight() && offset < s.endOffset()
 }
 
 // String returns the session as its start and end with a hyphen between
@@ -67,7 +67,7 @@ func (s Session) String() string {
 }
 
 func (s Session) validate() error {
-	if s.endOffset() <= sinceMidnight(s.start) {
+	if s.endOffset() <= s.start.SinceMidnight() {
 		return fmt.Errorf("session end %s must be after its start %s", s.end, s.start)
 	}
 
@@ -86,13 +86,5 @@ func (s Session) endOffset() time.Duration {
 		return hoursPerDay * time.Hour
 	}
 
-	return sinceMidnight(s.end)
-}
-
-// sinceMidnight returns how far into the day t is.
-func sinceMidnight(t civil.Time) time.Duration {
-	return time.Duration(t.Hour())*time.Hour +
-		time.Duration(t.Minute())*time.Minute +
-		time.Duration(t.Second())*time.Second +
-		time.Duration(t.Nanosecond())
+	return s.end.SinceMidnight()
 }

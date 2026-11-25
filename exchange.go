@@ -346,7 +346,7 @@ func (e Exchange) IsRegularHours(t time.Time) bool {
 // on the date d. It is the open of an ordinary trading day, whether or not
 // the exchange trades on d.
 func (e Exchange) RegularOpen(d civil.Date) time.Time {
-	return d.At(e.Open(), e.location)
+	return d.At(e.Open()).In(e.location)
 }
 
 // RegularClose returns the instant at which the last regular session ends on
@@ -356,10 +356,10 @@ func (e Exchange) RegularOpen(d civil.Date) time.Time {
 func (e Exchange) RegularClose(d civil.Date) time.Time {
 	last := e.sessions[len(e.sessions)-1]
 	if last.endsAtMidnight() {
-		return d.AddDays(1).In(e.location)
+		d = d.AddDays(1)
 	}
 
-	return d.At(last.end, e.location)
+	return d.At(last.end).In(e.location)
 }
 
 // String returns the code of the exchange as text.
@@ -437,7 +437,7 @@ func (e Exchange) validate() error {
 
 	for i := 1; i < len(e.sessions); i++ {
 		previous, next := e.sessions[i-1], e.sessions[i]
-		if previous.endOffset() > sinceMidnight(next.start) {
+		if previous.endOffset() > next.start.SinceMidnight() {
 			return fmt.Errorf("session %s must start after session %s ends", next, previous)
 		}
 	}

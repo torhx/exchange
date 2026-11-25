@@ -443,13 +443,10 @@ func ExampleExchange_DateOf() {
 
 	// April has begun in UTC while it is still March in New York.
 	instant := time.Date(2026, time.April, 1, 2, 0, 0, 0, time.UTC)
-	day, err := civil.NewLocationDate(nyse.DateOf(instant), nyse.TimeZone())
-	if err != nil {
-		log.Fatal(err)
-	}
+	day := nyse.DateOf(instant).In(nyse.Location())
 
 	fmt.Println(day)
-	fmt.Println(march.Contains(day.Date()))
+	fmt.Println(march.ContainsDate(day.Date()))
 	fmt.Println(day.At(nyse.Open()).UTC().Format(time.RFC3339))
 	// Output:
 	// 2026-03-31[America/New_York]
